@@ -77,6 +77,18 @@ def test_score_song_matches_decade_and_mood_tag_case_insensitively():
     assert any(reason.startswith("Mood tag match") for reason in reasons)
 
 
+def test_score_song_accepts_list_of_preferred_genres():
+    prefs = {"genre": ["lofi", "Acoustic"]}
+
+    lofi_score, _ = score_song(prefs, make_song(genre="lofi"))
+    acoustic_score, reasons = score_song(prefs, make_song(genre="acoustic"))
+    pop_score, _ = score_song(prefs, make_song(genre="pop"))
+
+    assert lofi_score == acoustic_score == 2.0
+    assert reasons == ["Genre match: acoustic (+2.0)"]
+    assert pop_score == 0.0
+
+
 def test_score_song_derives_acoustic_target_from_likes_acoustic():
     prefs = {"likes_acoustic": True}
 

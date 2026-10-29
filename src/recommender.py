@@ -175,12 +175,17 @@ def _with_acoustic_target(user_prefs: Dict) -> Dict:
     target = ACOUSTIC_LOVER_TARGET if user_prefs["likes_acoustic"] else ACOUSTIC_AVOIDER_TARGET
     return {**user_prefs, "acousticness": target}
 
+def _matches_preference(wanted, actual) -> bool:
+    """Return True if the song value equals the preference, or any of several accepted values."""
+    accepted = wanted if isinstance(wanted, (list, tuple, set)) else [wanted]
+    return str(actual).lower() in {str(value).lower() for value in accepted if value}
+
 def _categorical_points(user_prefs: Dict, song: Dict, weights: Dict) -> List[Tuple[float, str]]:
     """Return (points, reason) pairs for each categorical feature the song matches."""
     matches = []
     for feature, label in CATEGORICAL_FEATURES.items():
         wanted = user_prefs.get(feature)
-        if wanted and str(wanted).lower() == str(song.get(feature, "")).lower():
+        if wanted and _matches_preference(wanted, song.get(feature, "")):
             points = weights[feature]
             matches.append((points, f"{label}: {song[feature]} (+{round(points, 2)})"))
     return matches
