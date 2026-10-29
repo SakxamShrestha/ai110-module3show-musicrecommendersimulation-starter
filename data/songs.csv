@@ -1,11 +1,21 @@
-id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness
-1,Sunrise City,Neon Echo,pop,happy,0.82,118,0.84,0.79,0.18
-2,Midnight Coding,LoRoom,lofi,chill,0.42,78,0.56,0.62,0.71
-3,Storm Runner,Voltline,rock,intense,0.91,152,0.48,0.66,0.10
-4,Library Rain,Paper Lanterns,lofi,chill,0.35,72,0.60,0.58,0.86
-5,Gym Hero,Max Pulse,pop,intense,0.93,132,0.77,0.88,0.05
-6,Spacewalk Thoughts,Orbit Bloom,ambient,chill,0.28,60,0.65,0.41,0.92
-7,Coffee Shop Stories,Slow Stereo,jazz,relaxed,0.37,90,0.71,0.54,0.89
-8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22
-9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78
-10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35
+id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness,popularity,release_decade,detailed_mood_tag,instrumentalness,speechiness
+1,Sunrise City,Neon Echo,pop,happy,0.82,118,0.84,0.79,0.18,85,2020s,euphoric,0.02,0.05
+2,Midnight Coding,LoRoom,lofi,chill,0.42,78,0.56,0.62,0.71,62,2020s,focused,0.88,0.03
+3,Storm Runner,Voltline,rock,intense,0.91,152,0.48,0.66,0.10,71,2000s,aggressive,0.10,0.06
+4,Library Rain,Paper Lanterns,lofi,chill,0.35,72,0.60,0.58,0.86,58,2020s,chill,0.92,0.03
+5,Gym Hero,Max Pulse,pop,intense,0.93,132,0.77,0.88,0.05,79,2010s,aggressive,0.04,0.07
+6,Spacewalk Thoughts,Orbit Bloom,ambient,chill,0.28,60,0.65,0.41,0.92,44,2010s,dreamy,0.95,0.02
+7,Coffee Shop Stories,Slow Stereo,jazz,relaxed,0.37,90,0.71,0.54,0.89,51,1990s,cozy,0.70,0.04
+8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22,67,2010s,nostalgic,0.55,0.04
+9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78,60,2020s,focused,0.90,0.03
+10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35,74,2010s,euphoric,0.03,0.05
+11,Concrete Crown,Blockline,hip-hop,confident,0.78,94,0.62,0.85,0.08,88,2020s,confident,0.00,0.32
+12,Paper Cuts Verse,Mic Theory,hip-hop,moody,0.64,88,0.38,0.74,0.14,69,1990s,reflective,0.01,0.41
+13,Basement Static,The Loose Fuses,indie rock,moody,0.72,138,0.44,0.52,0.25,63,2000s,angsty,0.06,0.05
+14,Ferris Wheel Summer,Cardigan Club,indie rock,happy,0.68,126,0.78,0.60,0.32,72,2010s,nostalgic,0.04,0.04
+15,Laser Tide,Pulse Theory,edm,energetic,0.95,128,0.80,0.92,0.03,83,2010s,euphoric,0.45,0.05
+16,Drop Zone,Kilowatt Kids,edm,intense,0.97,140,0.58,0.86,0.02,77,2020s,aggressive,0.60,0.06
+17,Velvet Hours,Amara Lane,r&b,romantic,0.52,92,0.66,0.74,0.34,81,2020s,romantic,0.02,0.08
+18,Slow Burn Text,Jade Monroe,r&b,moody,0.48,84,0.41,0.70,0.40,70,2010s,melancholic,0.01,0.10
+19,Porch Light Letters,Willow & Pine,acoustic,relaxed,0.30,96,0.62,0.45,0.94,48,2000s,peaceful,0.12,0.04
+20,Blue Note Taxi,The Late Set,jazz,happy,0.55,132,0.74,0.62,0.80,46,1960s,playful,0.85,0.03
