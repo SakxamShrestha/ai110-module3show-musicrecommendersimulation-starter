@@ -185,3 +185,40 @@ def test_recommend_songs_skips_penalties_when_diversity_disabled():
 def test_recommend_songs_rejects_negative_k():
     with pytest.raises(ValueError, match="k must be non-negative"):
         recommend_songs({}, [make_song()], k=-1)
+
+
+def test_recommend_songs_keeps_duplicate_song_entries():
+    song = make_song(id=1)
+
+    results = recommend_songs({"genre": "pop"}, [song, song], k=2, apply_diversity=False)
+
+    assert len(results) == 2
+
+
+def test_recommend_songs_with_diversity_keeps_duplicate_song_entries():
+    song = make_song(id=1)
+
+    results = recommend_songs({"genre": "pop"}, [song, song], k=2)
+
+    assert len(results) == 2
+
+
+def test_score_song_skips_features_missing_from_song():
+    score, reasons = score_song({"energy": 0.5, "tempo_bpm": 120}, {"title": "Bare"})
+
+    assert score == 0.0
+    assert reasons == []
+
+
+def test_score_song_names_bad_numeric_preference():
+    with pytest.raises(ValueError, match="Preference 'energy' must be a number"):
+        score_song({"energy": "abc"}, make_song())
+
+
+def test_unknown_genre_and_mood_fall_back_to_numeric_features():
+    songs = [make_song(id=1, energy=0.9), make_song(id=2, energy=0.2, artist="Other")]
+
+    results = recommend_songs({"genre": "classical", "mood": "sad", "energy": 0.9}, songs, k=2)
+
+    assert [song["id"] for song, _, _ in results] == [1, 2]
+    assert "Genre match" not in results[0][2]

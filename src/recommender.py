@@ -190,14 +190,21 @@ def _categorical_points(user_prefs: Dict, song: Dict, weights: Dict) -> List[Tup
             matches.append((points, f"{label}: {song[feature]} (+{round(points, 2)})"))
     return matches
 
+def _as_number(value, preference_name: str) -> float:
+    """Convert a numeric preference to float, failing with a message that names the bad preference."""
+    try:
+        return float(value)
+    except (TypeError, ValueError) as error:
+        raise ValueError(f"Preference '{preference_name}' must be a number, got {value!r}") from error
+
 def _proximity_points(user_prefs: Dict, song: Dict, weights: Dict) -> List[Tuple[float, str]]:
     """Return (points, reason) pairs for how close each continuous feature is to its target."""
     results = []
     for feature, label in PROXIMITY_FEATURES.items():
         target = user_prefs.get(feature)
-        if target is None:
+        if target is None or song.get(feature) is None:
             continue
-        similarity = max(0.0, 1.0 - abs(float(target) - song[feature]))
+        similarity = max(0.0, 1.0 - abs(_as_number(target, feature) - song[feature]))
         points = similarity * weights[feature]
         results.append((points, f"{label}: {similarity:.2f} (+{round(points, 2)})"))
     return results
@@ -205,8 +212,8 @@ def _proximity_points(user_prefs: Dict, song: Dict, weights: Dict) -> List[Tuple
 def _bonus_points(user_prefs: Dict, song: Dict, weights: Dict) -> List[Tuple[float, str]]:
     """Return optional normalized tempo and popularity bonuses when the user asks for them."""
     bonuses = []
-    if user_prefs.get("tempo_bpm") is not None:
-        gap = abs(float(user_prefs["tempo_bpm"]) - song["tempo_bpm"])
+    if user_prefs.get("tempo_bpm") is not None and song.get("tempo_bpm") is not None:
+        gap = abs(_as_number(user_prefs["tempo_bpm"], "tempo_bpm") - song["tempo_bpm"])
         similarity = max(0.0, 1.0 - gap / MAX_TEMPO_GAP_BPM)
         points = similarity * weights["tempo_bpm"]
         bonuses.append((points, f"Tempo proximity: {similarity:.2f} (+{round(points, 2)})"))
@@ -235,14 +242,15 @@ def score_song(user_prefs: Dict, song: Dict, mode: str = DEFAULT_MODE) -> Tuple[
 def _apply_diversity_penalty(candidate: ScoredSong, selected: List[ScoredSong]) -> ScoredSong:
     """Return a copy of the candidate with repetition penalties applied against the songs already picked."""
     song, score, reasons = candidate
-    picked_artists = {picked["artist"] for picked, _, _ in selected}
-    same_genre_count = sum(1 for picked, _, _ in selected if picked["genre"] == song["genre"])
+    artist, genre = song.get("artist"), song.get("genre")
+    picked_artists = {picked.get("artist") for picked, _, _ in selected}
+    same_genre_count = sum(1 for picked, _, _ in selected if genre and picked.get("genre") == genre)
 
     penalties = []
-    if song["artist"] in picked_artists:
-        penalties.append((ARTIST_REPEAT_PENALTY, f"Diversity penalty: artist {song['artist']} already recommended (-{ARTIST_REPEAT_PENALTY})"))
+    if artist and artist in picked_artists:
+        penalties.append((ARTIST_REPEAT_PENALTY, f"Diversity penalty: artist {artist} already recommended (-{ARTIST_REPEAT_PENALTY})"))
     if same_genre_count >= MAX_GENRE_REPEATS:
-        penalties.append((GENRE_REPEAT_PENALTY, f"Diversity penalty: genre {song['genre']} already appears {same_genre_count}x (-{GENRE_REPEAT_PENALTY})"))
+        penalties.append((GENRE_REPEAT_PENALTY, f"Diversity penalty: genre {genre} already appears {same_genre_count}x (-{GENRE_REPEAT_PENALTY})"))
     if not penalties:
         return candidate
 
@@ -255,9 +263,10 @@ def _rerank_with_diversity(ranked: List[ScoredSong], k: int) -> List[ScoredSong]
     remaining = ranked
     while remaining and len(selected) < k:
         candidates = [_apply_diversity_penalty(item, selected) for item in remaining]
-        best = sorted(candidates, key=lambda item: item[1], reverse=True)[0]
-        selected = selected + [best]
-        remaining = [item for item in remaining if item[0] is not best[0]]
+        # max() keeps the first of equal scores, so ties preserve the original ranking order.
+        best_index = max(range(len(candidates)), key=lambda index: candidates[index][1])
+        selected = selected + [candidates[best_index]]
+        remaining = remaining[:best_index] + remaining[best_index + 1:]
     return selected
 
 def recommend_songs(

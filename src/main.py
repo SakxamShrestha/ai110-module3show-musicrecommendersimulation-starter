@@ -1,8 +1,8 @@
 """
 Command line runner for the Music Recommender Simulation.
 
-Runs the Phase 4 experiments: three listener profiles scored with the
-default mode, then one profile compared across every scoring mode.
+Runs the Phase 4 experiments: five listener profiles (including an edge case) scored with the
+default mode, one profile compared across every scoring mode, and the diversity penalty on vs off.
 
 Run from the project root with either:
     python -m src.main
@@ -56,8 +56,29 @@ PROFILES: Tuple[Tuple[str, Dict], ...] = (
             "release_decade": "2010s",
         },
     ),
+    (
+        "Default Pop / Happy Listener",
+        {
+            "genre": "pop",
+            "mood": "happy",
+            "energy": 0.8,
+        },
+    ),
+    (
+        "Edge Case: Sad but High-Energy Classical Fan",
+        {
+            # Adversarial profile: genre and mood exist nowhere in the catalog,
+            # and "sad" conflicts with a very high energy target.
+            "genre": "classical",
+            "mood": "sad",
+            "energy": 0.9,
+            "tempo_bpm": 170,
+            "prefers_popular": True,
+        },
+    ),
 )
 MODE_DEMO_PROFILE_INDEX = 0
+DIVERSITY_DEMO_PROFILE_INDEX = 1
 
 
 def _table_rows(recommendations: List[Tuple[Dict, float, str]]) -> List[List[List[str]]]:
@@ -122,11 +143,13 @@ def _describe_prefs(prefs: Dict) -> str:
     return ", ".join(parts)
 
 
-def print_section(title: str, prefs: Dict, songs: List[Dict], mode: str) -> None:
+def print_section(title: str, prefs: Dict, songs: List[Dict], mode: str, apply_diversity: bool = True) -> None:
     """Print a heading, the profile, and its top recommendations for one mode."""
-    print(f"\n=== {title} | mode: {mode} ===")
+    diversity_label = "on" if apply_diversity else "off"
+    print(f"\n=== {title} | mode: {mode} | diversity: {diversity_label} ===")
     print(f"Profile: {_describe_prefs(prefs)}")
-    print(format_table(recommend_songs(prefs, songs, k=TOP_K, mode=mode)))
+    recommendations = recommend_songs(prefs, songs, k=TOP_K, mode=mode, apply_diversity=apply_diversity)
+    print(format_table(recommendations))
 
 
 def run_profile_experiments(songs: List[Dict]) -> None:
@@ -144,6 +167,14 @@ def run_mode_comparison(songs: List[Dict]) -> None:
         print_section(name, prefs, songs, mode)
 
 
+def run_diversity_comparison(songs: List[Dict]) -> None:
+    """Run one profile with and without the diversity penalty to show the filter-bubble effect."""
+    name, prefs = PROFILES[DIVERSITY_DEMO_PROFILE_INDEX]
+    print(f"\n##### Experiment 3: diversity penalty on vs off for '{name}' #####")
+    for apply_diversity in (False, True):
+        print_section(name, prefs, songs, DEFAULT_MODE, apply_diversity)
+
+
 def main() -> None:
     """Load the catalog and run all Phase 4 experiments."""
     try:
@@ -155,6 +186,7 @@ def main() -> None:
     print(f"Loaded songs: {len(songs)}")
     run_profile_experiments(songs)
     run_mode_comparison(songs)
+    run_diversity_comparison(songs)
 
 
 if __name__ == "__main__":
