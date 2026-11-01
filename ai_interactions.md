@@ -40,9 +40,19 @@ Commands the agent ran included `python -m pytest`, `python -m src.main` and a C
 - **Profiles that did not fit the data.** The profiles listed two genres ("lofi/acoustic") and two moods ("energetic/aggressive"). The agent added list support for genres and split the two moods into `mood` and `detailed_mood_tag`.
 - **Data checks.** A script confirmed 20 rows, 15 columns per row, no empty cells, and every 0–1 value and 0–100 popularity in range.
 - **Tests and CLI run.** All 18 tests passed after each step. `python -m src.main` exited with code 0 and no errors.
-- **Hand-checked scores.** For example, Focus Flow: genre 2.0 + mood tag 1.0 + energy 1.27 + acousticness 0.93 = 5.21, minus 0.75 and 0.35 = 4.11, which matches the CLI output.
+- **Hand-checked scores.** For example, Focus Flow: genre 2.0 + mood tag 1.0 + energy 1.27 + acousticness 0.93 displays as 5.20. The program's total is 5.21 because it sums unrounded values and rounds only the total, so the one-cent gap is display rounding. Subtracting 0.75 and 0.35 gives 4.11, which matches the CLI output.
 
-<!-- TODO: Add anything you personally reviewed, changed or disagreed with in the agent's output. -->
+**Review and verification (final audit session)**
+
+- A multi-agent audit ran a code review (`python-reviewer`) and a documentation audit. It found the bugs and gaps listed below.
+- **Diversity re-rank bug.** The re-rank removed songs by value, so a duplicate song entry could be dropped. Removal now uses identity. Regression tests cover duplicate entries.
+- **Missing feature crash.** `score_song` raised a `KeyError` when a song lacked a feature. It now skips missing features. A test covers this.
+- **Unhelpful numeric error.** A bad numeric preference gave an unclear error. The error now names the preference. A test covers this.
+- **Stale tables.** The pasted tables in the README were out of date. They were regenerated from the current `python -m src.main` output and inserted by script, not typed by hand.
+- **Missing profile and experiment.** The README lacked the edge-case profile and the diversity on/off experiment. Both were added with their real output.
+- **Incomplete genre list.** The README listed only two genres with 2 songs. It now matches the model card.
+- **Diversity claim corrected.** The lofi top five was described as an effect of the penalty. Experiment 3 showed the same five songs with the penalty off, so the penalty only changed their order.
+- **Verification.** All 23 pytest tests pass. `python -m src.main` exits with code 0 and prints no errors.
 
 ---
 
@@ -59,6 +69,12 @@ The prompt asked for a `WEIGHT_STRATEGIES` dictionary with at least three modes.
 - The scoring algorithm is written once.
 - The "strategy" is the data that configures it.
 - Adding a new mode is a one-dictionary change with no new code paths.
+
+**Alternatives considered:**
+
+- **(a) Subclass per mode with an abstract `score()` method.** Rejected. It adds boilerplate for what is only a difference in weights.
+- **(b) An `if/elif` on the mode name inside `score_song`.** Rejected. It grows messy with each new mode and breaks the open/closed principle, because adding a mode means editing the scoring function.
+- **(c) Chosen: a dictionary of weight tables (a data-driven Strategy).** Adding a mode means adding one dictionary entry.
 
 The agent also added a test that every mode defines every weight, so a new mode cannot silently miss a feature.
 
@@ -92,7 +108,28 @@ The penalty depends on what has already been picked, so it has to be applied ste
 **Why it helps prevent filter bubbles:**
 
 - **Artist fairness:** one artist cannot fill the list. LoRoom's second song lost 0.75 points for the lofi listener.
-- **Genre fairness:** after two songs from one genre, other genres get a better chance. The lofi listener's top 5 included acoustic and ambient songs.
+- **Genre fairness:** after two songs from one genre, other genres get a better chance. The lofi listener's top 5 included acoustic and ambient songs, but Experiment 3 showed they were in the top five with the penalty off too. For this profile the penalty changed the order (Focus Flow moved from #3 to #4), not which songs were recommended.
 - **Transparency:** the penalty is visible, so the listener knows the system made a deliberate trade-off.
 - **Not a hard ban:** a very strong match can still make the list after a penalty. Focus Flow stayed at #4. Relevance still matters most.
 - **Can be turned off:** `apply_diversity=False` disables it for comparison.
+
+---
+
+## Agentic Workflow: Final Audit and Docs Pass
+
+**Prompt used:** "complete all project phases using multiple agents"
+
+**Agents used:**
+
+- `python-reviewer`: audited `src/` and `tests/` and reported the diversity re-rank, missing-feature and bad-number issues.
+- A documentation audit: checked the README, model card and this log against the program's real output.
+- `doc-updater`: updated the documentation, including the new edge-case profile and the diversity experiment.
+
+**Changes:**
+
+- Code fixes made during the session: identity-based removal in the diversity re-rank, skipping missing features in `score_song`, and a named error for bad numeric preferences.
+- README: five profiles, the edge case, the diversity on/off experiment, pairwise comparisons, and output tables regenerated from the program.
+- Model card: a Limitations and Bias section, the five-profile evaluation, the Gym Hero explanation, and a reflection on AI help.
+- This log: the review list above, the strategy alternatives, and this entry.
+
+**Verification:** 23 pytest tests pass. `python -m src.main` exits with code 0. Every output table in the README was inserted from the program's output, and the diversity claim was checked against Experiment 3.
